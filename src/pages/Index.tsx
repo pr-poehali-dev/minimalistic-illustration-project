@@ -98,7 +98,8 @@ export default function Index() {
   const MT = TOP + 48;
   const LBL_W = 48;
   const COL_W = (B4W - LBL_W - 20) / FUNCS.length;
-  const ROW_H = (BH - 70) / TESTS.length;
+  const SEL_TESTS = TESTS.filter((_, i) => isSel(i));
+  const ROW_H = (BH - 70) / SEL_TESTS.length;
 
   return (
     <div style={{ fontFamily: "IBM Plex Sans, sans-serif", background: "#F1F5F9", minHeight: "100vh" }}>
@@ -341,37 +342,28 @@ export default function Index() {
               );
             })}
 
-            {/* Matrix rows */}
-            {MATRIX.map((row, ri) => {
-              const sel = isSel(ri);
-              const selCount = TESTS.filter((_, i) => isSel(i)).length;
-              const ry = MT + 48 + ri * ROW_H;
+            {/* Matrix rows — только отобранные тесты */}
+            {SEL_TESTS.map((test, si) => {
+              const origIdx = TESTS.indexOf(test);
+              const row = MATRIX[origIdx];
+              const ry = MT + 48 + si * ROW_H;
               const lw = LBL_W - 4;
               const ch = ROW_H - 6;
               return (
-                <g key={`row-${ri}`}>
-                  {/* Divider */}
-                  {ri === selCount && (
-                    <line x1={ML} y1={ry - 3} x2={ML + LBL_W + FUNCS.length * COL_W} y2={ry - 3}
-                      stroke={GRAY_MID} strokeWidth={1} strokeDasharray="5 4" />
-                  )}
-
-                  {/* Row label */}
+                <g key={`row-${si}`}>
                   <rect x={ML} y={ry} width={lw} height={ch} rx={6}
-                    fill={sel ? GREEN_PALE : GRAY_LIGHT}
-                    stroke={sel ? GREEN : GRAY_MID} strokeWidth={sel ? 1.5 : 1} />
+                    fill={GREEN_PALE} stroke={GREEN} strokeWidth={1.5} />
                   <text x={ML + lw / 2} y={ry + ch / 2 + 8} textAnchor="middle"
                     fontSize={20} fontFamily="IBM Plex Mono" fontWeight="800"
-                    fill={sel ? GREEN : GRAY}>{TESTS[ri].id}</text>
+                    fill={GREEN}>{test.id}</text>
 
-                  {/* Cells */}
                   {row.map((val, ci) => {
                     const isChg = CHANGED.includes(ci);
                     const isHit = val === 1 && isChg;
                     const cx2 = ML + LBL_W + ci * COL_W + 4;
                     const cw = COL_W - 8;
                     return (
-                      <g key={`cell-${ri}-${ci}`}>
+                      <g key={`cell-${si}-${ci}`}>
                         <rect x={cx2} y={ry} width={cw} height={ch} rx={6}
                           fill={isHit ? "#D1FAE5" : val === 1 ? BLUE_PALE : GRAY_LIGHT}
                           stroke={isHit ? GREEN : val === 1 ? BLUE_LIGHT : GRAY_MID}
