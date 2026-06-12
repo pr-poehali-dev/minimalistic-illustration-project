@@ -186,11 +186,8 @@ export default function Index() {
                     fill={ch ? BLUE : GRAY}>{f}</text>
                   {ch
                     ? (
-                      <g>
-                        <circle cx={VX + VW - 16} cy={V2Y + 8 + i * FUNC2_H + FUNC2_H / 2} r={13} fill={ORANGE} />
-                        <text x={VX + VW - 16} y={V2Y + 8 + i * FUNC2_H + FUNC2_H / 2 + 5}
-                          textAnchor="middle" fontSize={13} fontFamily="IBM Plex Sans" fontWeight="800" fill={WHITE}>Δ</text>
-                      </g>
+                      <rect x={VX + 42} y={V2Y + 8 + i * FUNC2_H + FUNC2_H / 2 - 5}
+                        width={VW - 54} height={8} rx={3} fill={BLUE_LIGHT} opacity={0.4} />
                     )
                     : (
                       <rect x={VX + 42} y={V2Y + 8 + i * FUNC2_H + FUNC2_H / 2 - 5}
@@ -215,9 +212,7 @@ export default function Index() {
                     fontSize={22} fontFamily="IBM Plex Mono" fontWeight="800" fill={WHITE}>{FUNCS[fi]}</text>
                   <text x={B2X + 76} y={cy + CHG_H / 2 - 8}
                     fontSize={18} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>изменена</text>
-                  <circle cx={B2X + B2W - 20} cy={cy + 20} r={13} fill={ORANGE} />
-                  <text x={B2X + B2W - 20} y={cy + 25} textAnchor="middle"
-                    fontSize={13} fontFamily="IBM Plex Sans" fontWeight="800" fill={WHITE}>Δ</text>
+
                 </g>
               );
             })}
@@ -298,13 +293,7 @@ export default function Index() {
                         <text x={bx + subW / 2} y={by + bh / 2 + 7} textAnchor="middle"
                           fontSize={sel ? 20 : 17} fontFamily="IBM Plex Mono" fontWeight="800"
                           fill={isChg ? BLUE : GRAY_MID}>{FUNCS[fi]}</text>
-                        {isChg && (
-                          <circle cx={bx + subW - 10} cy={by + 10} r={8} fill={ORANGE} />
-                        )}
-                        {isChg && (
-                          <text x={bx + subW - 10} y={by + 14} textAnchor="middle"
-                            fontSize={9} fontFamily="IBM Plex Sans" fontWeight="800" fill={WHITE}>Δ</text>
-                        )}
+
                       </g>
                     );
                   })}
@@ -347,10 +336,7 @@ export default function Index() {
                   <text x={hx + hw / 2} y={MT + 26} textAnchor="middle"
                     fontSize={22} fontFamily="IBM Plex Mono" fontWeight="800"
                     fill={isChg ? BLUE : GRAY}>{f}</text>
-                  {isChg && (
-                    <text x={hx + hw / 2} y={MT - 4} textAnchor="middle"
-                      fontSize={12} fontFamily="IBM Plex Sans" fontWeight="700" fill={ORANGE}>Δ</text>
-                  )}
+
                 </g>
               );
             })}
