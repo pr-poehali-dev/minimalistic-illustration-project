@@ -16,46 +16,36 @@ const WHITE = "#FFFFFF";
 const W = 1920;
 const H = 1080;
 
-// Функции программы
-const FUNCS = ["f₁", "f₂", "f₃", "f₄", "f₅"];
-const FUNC_NAMES = ["validate()", "parse()", "render()", "cache()", "submit()"];
-const CHANGED_FUNCS = [0, 2, 4]; // индексы изменённых: f1, f3, f5
+// 4 функции, изменены f₂ и f₄
+const FUNCS = ["f₁", "f₂", "f₃", "f₄"];
+const CHANGED = [1, 3];
 
-// Тесты и какие функции они покрывают
-const TESTS: { id: string; name: string; covers: number[] }[] = [
-  { id: "t₁", name: "test_validate_empty",  covers: [0, 2] },      // f1, f3
-  { id: "t₂", name: "test_parse_json",      covers: [1, 3] },      // f2, f4
-  { id: "t₃", name: "test_render_html",     covers: [2, 4] },      // f3, f5
-  { id: "t₄", name: "test_cache_miss",      covers: [3, 1] },      // f4, f2
-  { id: "t₅", name: "test_submit_form",     covers: [4, 0] },      // f5, f1
-  { id: "t₆", name: "test_validate_full",   covers: [0, 1, 2] },   // f1, f2, f3
+// 4 теста: какие функции покрывают
+const TESTS = [
+  { id: "t₁", covers: [0, 1] },
+  { id: "t₂", covers: [1, 2] },
+  { id: "t₃", covers: [2, 3] },
+  { id: "t₄", covers: [0, 3] },
 ];
 
-// Матрица покрытия: строки = тесты, столбцы = функции
-// I[i][j] = 1 если тест i покрывает функцию j
-const buildMatrix = () =>
-  TESTS.map(t => FUNCS.map((_, fi) => (t.covers.includes(fi) ? 1 : 0)));
+const MATRIX = TESTS.map(t => FUNCS.map((_, fi) => t.covers.includes(fi) ? 1 : 0));
+const isSel = (ti: number) => TESTS[ti].covers.some(fi => CHANGED.includes(fi));
 
 export default function Index() {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const handleDownloadSVG = () => {
+  const downloadSVG = () => {
     if (!svgRef.current) return;
-    const s = new XMLSerializer();
-    const str = s.serializeToString(svgRef.current);
-    const blob = new Blob([str], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
+    const str = new XMLSerializer().serializeToString(svgRef.current);
     const a = document.createElement("a");
-    a.href = url; a.download = "regression-testing.svg"; a.click();
-    URL.revokeObjectURL(url);
+    a.href = URL.createObjectURL(new Blob([str], { type: "image/svg+xml" }));
+    a.download = "regression-testing.svg"; a.click();
   };
 
-  const handleDownloadPNG = () => {
+  const downloadPNG = () => {
     if (!svgRef.current) return;
-    const s = new XMLSerializer();
-    const str = s.serializeToString(svgRef.current);
-    const blob = new Blob([str], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    const str = new XMLSerializer().serializeToString(svgRef.current);
+    const url = URL.createObjectURL(new Blob([str], { type: "image/svg+xml;charset=utf-8" }));
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -69,34 +59,27 @@ export default function Index() {
     img.src = url;
   };
 
-  const matrix = buildMatrix();
+  const PAD = 60;
+  const TOP = 100;
+  const GAP = 40;
+  const BH = 820;
+  const MID_Y = TOP + BH / 2;
 
-  // Layout
-  const PAD = 48;
-  const TOP = 80;
-  const BH = 820; // block height
+  const B1W = 250; const B1X = PAD;
+  const B2W = 250; const B2X = B1X + B1W + GAP;
+  const B3W = 530; const B3X = B2X + B2W + GAP;
+  const B4W = 570; const B4X = B3X + B3W + GAP;
 
-  // Block 1: Versions — x=48, w=240
-  const B1X = PAD;
-  const B1W = 240;
+  const T_ROW_H = (BH - 48) / TESTS.length;
 
-  // Block 2: Changed funcs — x=340, w=240
-  const B2X = 336;
-  const B2W = 250;
-
-  // Block 3: Tests — x=636, w=520
-  const B3X = 634;
-  const B3W = 640;
-
-  // Block 4: Matrix — x=1226, w=640
-  const B4X = 1326;
-  const B4W = 546;
-
-  const ARROW_Y = TOP + BH / 2;
+  const M_LEFT = B4X + 20;
+  const M_TOP = TOP + 58;
+  const LABEL_W = 52;
+  const COL_W = (B4W - LABEL_W - 36) / FUNCS.length;
+  const ROW_H = (BH - 80) / TESTS.length;
 
   return (
     <div style={{ fontFamily: "IBM Plex Sans, sans-serif", background: "#F8FAFC", minHeight: "100vh" }}>
-      {/* Toolbar */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "14px 28px", background: WHITE, borderBottom: `1px solid ${GRAY_MID}`,
@@ -104,14 +87,14 @@ export default function Index() {
       }}>
         <div>
           <div style={{ fontSize: 13, color: GRAY, fontWeight: 600 }}>Регрессионное тестирование</div>
-          <div style={{ fontSize: 11, color: GRAY_MID, marginTop: 2 }}>1920 × 1080 px · SVG / PNG</div>
+          <div style={{ fontSize: 11, color: GRAY_MID, marginTop: 2 }}>1920 × 1080 px</div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={handleDownloadSVG} style={{
+          <button onClick={downloadSVG} style={{
             padding: "8px 20px", borderRadius: 8, border: `1.5px solid ${BLUE_LIGHT}`,
             background: WHITE, color: BLUE, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "IBM Plex Sans, sans-serif",
           }}>Скачать SVG</button>
-          <button onClick={handleDownloadPNG} style={{
+          <button onClick={downloadPNG} style={{
             padding: "8px 20px", borderRadius: 8, border: "none",
             background: BLUE, color: WHITE, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "IBM Plex Sans, sans-serif",
           }}>Скачать PNG</button>
@@ -120,427 +103,289 @@ export default function Index() {
 
       <div style={{ padding: 20, overflow: "auto" }}>
         <div style={{ background: WHITE, borderRadius: 12, boxShadow: "0 2px 16px rgba(0,0,0,0.06)", display: "inline-block" }}>
-          <svg
-            ref={svgRef}
-            width={W} height={H}
-            viewBox={`0 0 ${W} ${H}`}
-            xmlns="http://www.w3.org/2000/svg"
-            style={{ display: "block", maxWidth: "100%", height: "auto" }}
-          >
+          <svg ref={svgRef} width={W} height={H} viewBox={`0 0 ${W} ${H}`}
+            xmlns="http://www.w3.org/2000/svg" style={{ display: "block", maxWidth: "100%", height: "auto" }}>
             <defs>
-              <marker id="arr-blue" markerWidth="10" markerHeight="10" refX="8" refY="3.5" orient="auto">
-                <path d="M0,0 L0,7 L10,3.5 z" fill={BLUE_LIGHT} />
+              <marker id="a-bl" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+                <path d="M0,0 L0,7 L9,3.5 z" fill={BLUE_LIGHT} />
               </marker>
-              <marker id="arr-green" markerWidth="10" markerHeight="10" refX="8" refY="3.5" orient="auto">
-                <path d="M0,0 L0,7 L10,3.5 z" fill={GREEN} />
+              <marker id="a-gr" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+                <path d="M0,0 L0,7 L9,3.5 z" fill={GREEN} />
               </marker>
             </defs>
 
-            {/* BG */}
             <rect width={W} height={H} fill={WHITE} />
 
-            {/* ── STEP LABELS ── */}
+            {/* Step labels */}
             {[
-              { cx: B1X + B1W / 2, label: "① Версии программы" },
-              { cx: B2X + B2W / 2, label: "② Изменённые функции" },
-              { cx: B3X + B3W / 2, label: "③ Набор тестов" },
-              { cx: B4X + B4W / 2, label: "④ Матрица покрытия" },
-            ].map(({ cx, label }) => (
-              <text key={label} x={cx} y={54} textAnchor="middle"
-                fontSize={12} fontFamily="IBM Plex Sans" fontWeight="500" fill={GRAY} letterSpacing="0.3">
-                {label}
-              </text>
+              { cx: B1X + B1W / 2, t: "① Версии" },
+              { cx: B2X + B2W / 2, t: "② Изменения" },
+              { cx: B3X + B3W / 2, t: "③ Отбор тестов" },
+              { cx: B4X + B4W / 2, t: "④ Матрица покрытия" },
+            ].map(({ cx, t }) => (
+              <text key={t} x={cx} y={72} textAnchor="middle"
+                fontSize={13} fontFamily="IBM Plex Sans" fontWeight="500" fill={GRAY}>{t}</text>
             ))}
 
-            {/* ══════════ BLOCK 1: VERSIONS ══════════ */}
-            {/* Container */}
+            {/* ══ BLOCK 1: VERSIONS ══ */}
             <rect x={B1X} y={TOP} width={B1W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B1X} y={TOP} width={B1W} height={4} rx={2} fill={BLUE} />
+            <text x={B1X + B1W / 2} y={TOP + 30} textAnchor="middle"
+              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>P и P′</text>
 
-            <text x={B1X + B1W / 2} y={TOP + 28} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>
-              P и P′
-            </text>
-
-            {/* Base version card */}
+            {/* Version P */}
             {(() => {
-              const cx = B1X + 16;
-              const cy = TOP + 48;
-              const cw = B1W - 32;
-              const ch = 340;
+              const vx = B1X + 14; const vy = TOP + 46; const vw = B1W - 28; const vh = 354;
               return (
                 <g>
-                  <rect x={cx} y={cy} width={cw} height={ch} rx={8}
-                    fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1.5} />
-                  <text x={cx + cw / 2} y={cy + 22} textAnchor="middle"
-                    fontSize={11} fontFamily="IBM Plex Sans" fontWeight="600" fill={GRAY}>
-                    Базовая версия P
-                  </text>
-                  {FUNC_NAMES.map((fn, i) => (
+                  <rect x={vx} y={vy} width={vw} height={vh} rx={8} fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1} />
+                  <text x={vx + vw / 2} y={vy + 22} textAnchor="middle"
+                    fontSize={11} fontFamily="IBM Plex Sans" fontWeight="600" fill={GRAY}>Базовая версия P</text>
+                  {FUNCS.map((f, i) => (
                     <g key={i}>
-                      <rect x={cx + 10} y={cy + 36 + i * 56} width={cw - 20} height={44} rx={6}
+                      <rect x={vx + 10} y={vy + 34 + i * 76} width={vw - 20} height={62} rx={6}
                         fill={WHITE} stroke={GRAY_MID} strokeWidth={1} />
-                      <text x={cx + 20} y={cy + 36 + i * 56 + 16} fontSize={10}
-                        fontFamily="IBM Plex Mono" fill={GRAY} fontWeight="400">
-                        {FUNCS[i]}
-                      </text>
-                      <text x={cx + 42} y={cy + 36 + i * 56 + 16} fontSize={10}
-                        fontFamily="IBM Plex Mono" fill={GRAY}>
-                        {fn}
-                      </text>
-                      <rect x={cx + 14} y={cy + 36 + i * 56 + 24} width={cw - 34} height={8} rx={2}
-                        fill={GRAY_MID} opacity={0.4} />
+                      <text x={vx + 22} y={vy + 34 + i * 76 + 25}
+                        fontSize={16} fontFamily="IBM Plex Mono" fontWeight="600" fill={GRAY}>{f}</text>
+                      <rect x={vx + 18} y={vy + 34 + i * 76 + 36} width={vw - 38} height={8} rx={3} fill={GRAY_MID} opacity={0.3} />
+                      <rect x={vx + 18} y={vy + 34 + i * 76 + 49} width={(vw - 38) * 0.55} height={6} rx={3} fill={GRAY_MID} opacity={0.18} />
                     </g>
                   ))}
                 </g>
               );
             })()}
 
-            {/* Arrow between versions */}
-            <text x={B1X + B1W / 2} y={TOP + 408} textAnchor="middle"
-              fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>модификация</text>
-            <line x1={B1X + B1W / 2} y1={TOP + 415} x2={B1X + B1W / 2} y2={TOP + 428}
-              stroke={GRAY_MID} strokeWidth={1.5} markerEnd="url(#arr-blue)" />
+            <line x1={B1X + B1W / 2} y1={TOP + 410} x2={B1X + B1W / 2} y2={TOP + 426}
+              stroke={GRAY_MID} strokeWidth={1.5} markerEnd="url(#a-bl)" />
+            <text x={B1X + B1W / 2} y={TOP + 406} textAnchor="middle"
+              fontSize={9} fontFamily="IBM Plex Sans" fill={GRAY}>изменение</text>
 
-            {/* Modified version card */}
+            {/* Version P' */}
             {(() => {
-              const cx = B1X + 16;
-              const cy = TOP + 440;
-              const cw = B1W - 32;
-              const ch = 360;
+              const vx = B1X + 14; const vy = TOP + 438; const vw = B1W - 28; const vh = 370;
               return (
                 <g>
-                  <rect x={cx} y={cy} width={cw} height={ch} rx={8}
-                    fill={BLUE_PALE} stroke={BLUE_LIGHT} strokeWidth={1.5} />
-                  <text x={cx + cw / 2} y={cy + 22} textAnchor="middle"
-                    fontSize={11} fontFamily="IBM Plex Sans" fontWeight="600" fill={BLUE}>
-                    Модифицированная P′
-                  </text>
-                  {FUNC_NAMES.map((fn, i) => {
-                    const isChanged = CHANGED_FUNCS.includes(i);
+                  <rect x={vx} y={vy} width={vw} height={vh} rx={8} fill={BLUE_PALE} stroke={BLUE_LIGHT} strokeWidth={1.5} />
+                  <text x={vx + vw / 2} y={vy + 22} textAnchor="middle"
+                    fontSize={11} fontFamily="IBM Plex Sans" fontWeight="600" fill={BLUE}>Модифицированная P′</text>
+                  {FUNCS.map((f, i) => {
+                    const ch = CHANGED.includes(i);
                     return (
                       <g key={i}>
-                        <rect x={cx + 10} y={cy + 36 + i * 60} width={cw - 20} height={46} rx={6}
-                          fill={isChanged ? BLUE_MID : WHITE}
-                          stroke={isChanged ? BLUE : GRAY_MID}
-                          strokeWidth={isChanged ? 1.5 : 1} />
-                        {isChanged && <rect x={cx + 10} y={cy + 36 + i * 60} width={4} height={46} rx={2} fill={BLUE} />}
-                        <text x={cx + 22} y={cy + 36 + i * 60 + 17} fontSize={10}
-                          fontFamily="IBM Plex Mono" fill={isChanged ? BLUE : GRAY} fontWeight={isChanged ? "600" : "400"}>
-                          {FUNCS[i]}
-                        </text>
-                        <text x={cx + 44} y={cy + 36 + i * 60 + 17} fontSize={10}
-                          fontFamily="IBM Plex Mono" fill={isChanged ? DARK : GRAY}>
-                          {fn}
-                        </text>
-                        {isChanged && (
+                        <rect x={vx + 10} y={vy + 34 + i * 80} width={vw - 20} height={66} rx={6}
+                          fill={ch ? BLUE_MID : WHITE} stroke={ch ? BLUE : GRAY_MID} strokeWidth={ch ? 1.5 : 1} />
+                        {ch && <rect x={vx + 10} y={vy + 34 + i * 80} width={4} height={66} rx={2} fill={BLUE} />}
+                        <text x={vx + 24} y={vy + 34 + i * 80 + 27}
+                          fontSize={16} fontFamily="IBM Plex Mono" fontWeight="700"
+                          fill={ch ? BLUE : GRAY}>{f}</text>
+                        {ch && (
                           <g>
-                            <circle cx={cx + cw - 22} cy={cy + 36 + i * 60 + 14} r={8} fill={ORANGE} />
-                            <text x={cx + cw - 22} y={cy + 36 + i * 60 + 18} textAnchor="middle"
+                            <circle cx={vx + vw - 20} cy={vy + 34 + i * 80 + 22} r={10} fill={ORANGE} />
+                            <text x={vx + vw - 20} y={vy + 34 + i * 80 + 26}
+                              textAnchor="middle" fontSize={10} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>Δ</text>
+                          </g>
+                        )}
+                        <rect x={vx + 18} y={vy + 34 + i * 80 + 38} width={vw - 38} height={8} rx={3}
+                          fill={ch ? BLUE_LIGHT : GRAY_MID} opacity={0.3} />
+                        <rect x={vx + 18} y={vy + 34 + i * 80 + 50} width={(vw - 38) * 0.55} height={6} rx={3}
+                          fill={ch ? BLUE_LIGHT : GRAY_MID} opacity={0.18} />
+                      </g>
+                    );
+                  })}
+                </g>
+              );
+            })()}
+
+            {/* ══ BLOCK 2: ΔF ══ */}
+            <rect x={B2X} y={TOP} width={B2W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
+            <rect x={B2X} y={TOP} width={B2W} height={4} rx={2} fill={ORANGE} />
+            <text x={B2X + B2W / 2} y={TOP + 30} textAnchor="middle"
+              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>ΔF</text>
+
+            <text x={B2X + 18} y={TOP + 58} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>изменены:</text>
+            {CHANGED.map((fi, i) => {
+              const cy = TOP + 68 + i * 148;
+              const bx = B2X + 12; const bw = B2W - 24; const bh = 128;
+              return (
+                <g key={fi}>
+                  <rect x={bx} y={cy} width={bw} height={bh} rx={10}
+                    fill={BLUE_PALE} stroke={BLUE} strokeWidth={1.5} />
+                  <rect x={bx} y={cy} width={4} height={bh} rx={2} fill={BLUE} />
+                  <circle cx={bx + 44} cy={cy + 44} r={26} fill={BLUE} />
+                  <text x={bx + 44} y={cy + 51} textAnchor="middle"
+                    fontSize={20} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{FUNCS[fi]}</text>
+                  <text x={bx + 80} y={cy + 38} fontSize={12} fontFamily="IBM Plex Sans" fontWeight="600" fill={DARK}>изменена</text>
+                  <text x={bx + 80} y={cy + 56} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>нужна проверка</text>
+                  <rect x={bx + 16} y={cy + 80} width={bw - 32} height={10} rx={3} fill={BLUE_MID} />
+                  <rect x={bx + 16} y={cy + 96} width={(bw - 32) * 0.6} height={8} rx={3} fill={BLUE_MID} opacity={0.5} />
+                </g>
+              );
+            })}
+
+            <text x={B2X + 18} y={TOP + 390} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>не затронуты:</text>
+            {FUNCS.filter((_, i) => !CHANGED.includes(i)).map((f, i) => {
+              const cy = TOP + 402 + i * 58;
+              return (
+                <g key={f}>
+                  <rect x={B2X + 12} y={cy} width={B2W - 24} height={46} rx={8}
+                    fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1} />
+                  <text x={B2X + B2W / 2} y={cy + 29} textAnchor="middle"
+                    fontSize={18} fontFamily="IBM Plex Mono" fontWeight="600" fill={GRAY_MID}>{f}</text>
+                </g>
+              );
+            })}
+
+            {/* ══ BLOCK 3: TESTS ══ */}
+            <rect x={B3X} y={TOP} width={B3W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
+            <rect x={B3X} y={TOP} width={B3W} height={4} rx={2} fill={GREEN} />
+            <text x={B3X + B3W / 2} y={TOP + 30} textAnchor="middle"
+              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>T — набор тестов</text>
+
+            {TESTS.map((test, ti) => {
+              const sel = isSel(ti);
+              const ty = TOP + 46 + ti * T_ROW_H;
+              const tx = B3X + 12; const tw = B3W - 24; const th = T_ROW_H - 10;
+              const midY = ty + 4 + th / 2;
+              return (
+                <g key={test.id}>
+                  <rect x={tx} y={ty + 4} width={tw} height={th} rx={10}
+                    fill={sel ? GREEN_PALE : GRAY_LIGHT}
+                    stroke={sel ? GREEN : GRAY_MID} strokeWidth={sel ? 2 : 1} />
+                  {sel && <rect x={tx} y={ty + 4} width={4} height={th} rx={2} fill={GREEN} />}
+
+                  {/* Test circle label */}
+                  <circle cx={tx + 34} cy={midY} r={22} fill={sel ? GREEN : GRAY_MID} />
+                  <text x={tx + 34} y={midY + 7} textAnchor="middle"
+                    fontSize={16} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{test.id}</text>
+
+                  {/* Selected badge */}
+                  {sel && (
+                    <g>
+                      <rect x={tx + tw - 92} y={ty + 10} width={82} height={22} rx={11} fill={GREEN} />
+                      <text x={tx + tw - 51} y={ty + 25} textAnchor="middle"
+                        fontSize={10} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>✓ отобран</text>
+                    </g>
+                  )}
+
+                  {/* "covers:" label */}
+                  <text x={tx + 66} y={midY - 24} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>покрывает:</text>
+
+                  {/* Sub-blocks per covered function */}
+                  {test.covers.map((fi, ci) => {
+                    const isChg = CHANGED.includes(fi);
+                    const bx = tx + 62 + ci * 222;
+                    const by = midY - 14;
+                    const bw = 210; const bh = 72;
+                    return (
+                      <g key={fi}>
+                        <rect x={bx} y={by} width={bw} height={bh} rx={8}
+                          fill={isChg ? BLUE_PALE : WHITE}
+                          stroke={isChg ? BLUE : GRAY_MID} strokeWidth={isChg ? 1.5 : 1} />
+                        {isChg && <rect x={bx} y={by} width={4} height={bh} rx={2} fill={BLUE} />}
+                        <circle cx={bx + 28} cy={by + 26} r={17} fill={isChg ? BLUE : GRAY_MID} />
+                        <text x={bx + 28} y={by + 32} textAnchor="middle"
+                          fontSize={14} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{FUNCS[fi]}</text>
+                        <text x={bx + 54} y={by + 22} fontSize={11} fontFamily="IBM Plex Sans"
+                          fontWeight={isChg ? "600" : "400"} fill={isChg ? DARK : GRAY}>
+                          {isChg ? "изменена" : "не изменена"}
+                        </text>
+                        {isChg && (
+                          <g>
+                            <circle cx={bx + bw - 18} cy={by + 16} r={10} fill={ORANGE} />
+                            <text x={bx + bw - 18} y={by + 20} textAnchor="middle"
                               fontSize={9} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>Δ</text>
                           </g>
                         )}
-                        <rect x={cx + 18} y={cy + 36 + i * 60 + 26} width={cw - 38} height={8} rx={2}
-                          fill={isChanged ? BLUE_LIGHT : GRAY_MID} opacity={isChanged ? 0.3 : 0.3} />
+                        <rect x={bx + 10} y={by + 48} width={bw - 20} height={8} rx={3}
+                          fill={isChg ? BLUE_MID : GRAY_LIGHT} />
                       </g>
                     );
                   })}
                 </g>
               );
-            })()}
-
-            {/* ══════════ BLOCK 2: CHANGED FUNCS ══════════ */}
-            <rect x={B2X} y={TOP} width={B2W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
-            <rect x={B2X} y={TOP} width={B2W} height={4} rx={2} fill={ORANGE} />
-
-            <text x={B2X + B2W / 2} y={TOP + 28} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>
-              ΔF — изменения
-            </text>
-
-            {/* Only changed funcs */}
-            {CHANGED_FUNCS.map((fi, i) => {
-              const cy = TOP + 56 + i * 100;
-              return (
-                <g key={fi}>
-                  <rect x={B2X + 16} y={cy} width={B2W - 32} height={80} rx={8}
-                    fill={BLUE_PALE} stroke={BLUE} strokeWidth={1.5} />
-                  <rect x={B2X + 16} y={cy} width={4} height={80} rx={2} fill={BLUE} />
-
-                  <circle cx={B2X + 34} cy={cy + 24} r={14} fill={BLUE} />
-                  <text x={B2X + 34} y={cy + 29} textAnchor="middle"
-                    fontSize={12} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>
-                    {FUNCS[fi]}
-                  </text>
-
-                  <text x={B2X + 58} y={cy + 22} fontSize={12}
-                    fontFamily="IBM Plex Mono" fontWeight="600" fill={DARK}>
-                    {FUNC_NAMES[fi]}
-                  </text>
-                  <text x={B2X + 28} y={cy + 50} fontSize={10}
-                    fontFamily="IBM Plex Sans" fill={GRAY}>
-                    изменена логика функции
-                  </text>
-
-                  <rect x={B2X + 22} y={cy + 60} width={B2W - 50} height={10} rx={3}
-                    fill={BLUE_MID} />
-                </g>
-              );
             })}
 
-            {/* Unaffected label */}
-            <text x={B2X + B2W / 2} y={TOP + 380} textAnchor="middle"
-              fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>
-              не затронуто:
-            </text>
-            {FUNCS.filter((_, i) => !CHANGED_FUNCS.includes(i)).map((f, i) => {
-              const cy = TOP + 396 + i * 44;
-              return (
-                <g key={f}>
-                  <rect x={B2X + 16} y={cy} width={B2W - 32} height={34} rx={6}
-                    fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1} />
-                  <text x={B2X + 26} y={cy + 22} fontSize={11}
-                    fontFamily="IBM Plex Mono" fill={GRAY_MID} fontWeight="400">
-                    {f} · {FUNC_NAMES[FUNCS.indexOf(f)]}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* ══════════ BLOCK 3: TESTS ══════════ */}
-            <rect x={B3X} y={TOP} width={B3W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
-            <rect x={B3X} y={TOP} width={B3W} height={4} rx={2} fill={GREEN} />
-
-            <text x={B3X + B3W / 2} y={TOP + 28} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>
-              T — набор тестов
-            </text>
-
-            {TESTS.map((test, i) => {
-              const isSelected = test.covers.some(fi => CHANGED_FUNCS.includes(fi));
-              const ty = TOP + 48 + i * 126;
-              const TW = B3W - 32;
-              return (
-                <g key={test.id}>
-                  {/* Main test row */}
-                  <rect x={B3X + 16} y={ty} width={TW} height={50} rx={8}
-                    fill={isSelected ? GREEN_PALE : GRAY_LIGHT}
-                    stroke={isSelected ? GREEN : GRAY_MID}
-                    strokeWidth={isSelected ? 2 : 1} />
-                  {isSelected && <rect x={B3X + 16} y={ty} width={4} height={50} rx={2} fill={GREEN} />}
-
-                  {/* Test ID */}
-                  <text x={B3X + 30} y={ty + 22} fontSize={14}
-                    fontFamily="IBM Plex Mono" fontWeight="700"
-                    fill={isSelected ? GREEN : GRAY}>
-                    {test.id}
-                  </text>
-                  {/* Test name */}
-                  <text x={B3X + 72} y={ty + 22} fontSize={11}
-                    fontFamily="IBM Plex Mono" fontWeight="400"
-                    fill={isSelected ? DARK : GRAY}>
-                    {test.name}
-                  </text>
-                  {/* Selected badge */}
-                  {isSelected && (
-                    <g>
-                      <rect x={B3X + TW - 58} y={ty + 10} width={52} height={22} rx={11} fill={GREEN} />
-                      <text x={B3X + TW - 32} y={ty + 25} textAnchor="middle"
-                        fontSize={9} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>
-                        отобран
-                      </text>
-                    </g>
-                  )}
-                  {/* Covers label */}
-                  <text x={B3X + 30} y={ty + 40} fontSize={9}
-                    fontFamily="IBM Plex Sans" fill={GRAY}>
-                    покрывает:
-                  </text>
-
-                  {/* Sub-blocks: covered functions */}
-                  <g transform={`translate(${B3X + 16}, ${ty + 52})`}>
-                    {test.covers.map((fi, ci) => {
-                      const isChangedFunc = CHANGED_FUNCS.includes(fi);
-                      const bx = ci * 114;
-                      return (
-                        <g key={fi}>
-                          <rect x={bx} y={0} width={108} height={60} rx={6}
-                            fill={isChangedFunc ? BLUE_PALE : GRAY_LIGHT}
-                            stroke={isChangedFunc ? BLUE : GRAY_MID}
-                            strokeWidth={isChangedFunc ? 1.5 : 1} />
-                          {isChangedFunc && <rect x={bx} y={0} width={4} height={60} rx={2} fill={BLUE} />}
-
-                          <circle cx={bx + 22} cy={18} r={10}
-                            fill={isChangedFunc ? BLUE : GRAY_MID} />
-                          <text x={bx + 22} y={22} textAnchor="middle"
-                            fontSize={10} fontFamily="IBM Plex Mono" fontWeight="700"
-                            fill={WHITE}>
-                            {FUNCS[fi]}
-                          </text>
-
-                          <text x={bx + 38} y={18} fontSize={10}
-                            fontFamily="IBM Plex Mono" fontWeight={isChangedFunc ? "600" : "400"}
-                            fill={isChangedFunc ? DARK : GRAY}>
-                            {FUNC_NAMES[fi]}
-                          </text>
-
-                          {isChangedFunc && (
-                            <text x={bx + 8} y={44} fontSize={9}
-                              fontFamily="IBM Plex Sans" fill={BLUE} fontWeight="500">
-                              ← изменённая
-                            </text>
-                          )}
-                          {!isChangedFunc && (
-                            <text x={bx + 8} y={44} fontSize={9}
-                              fontFamily="IBM Plex Sans" fill={GRAY}>
-                              не изменена
-                            </text>
-                          )}
-                        </g>
-                      );
-                    })}
-                  </g>
-                </g>
-              );
-            })}
-
-            {/* ══════════ BLOCK 4: COVERAGE MATRIX ══════════ */}
+            {/* ══ BLOCK 4: MATRIX ══ */}
             <rect x={B4X} y={TOP} width={B4W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B4X} y={TOP} width={B4W} height={4} rx={2} fill={BLUE} />
+            <text x={B4X + B4W / 2} y={TOP + 30} textAnchor="middle"
+              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>I — матрица покрытия</text>
 
-            <text x={B4X + B4W / 2} y={TOP + 28} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>
-              I — матрица покрытия
-            </text>
-            <text x={B4X + B4W / 2} y={TOP + 46} textAnchor="middle"
-              fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>
-              строки: тесты · столбцы: функции
-            </text>
-
-            {(() => {
-              const MX = B4X + 30;
-              const MY = TOP + 62;
-              const colW = (B4W - 80) / FUNCS.length;
-              const rowH = 100;
-              const labelColW = 60;
-
+            {/* Col headers */}
+            {FUNCS.map((f, ci) => {
+              const isChg = CHANGED.includes(ci);
+              const hx = M_LEFT + LABEL_W + ci * COL_W + 4;
+              const hw = COL_W - 8;
               return (
-                <g>
-                  {/* Column headers */}
-                  {FUNCS.map((f, ci) => {
-                    const isChanged = CHANGED_FUNCS.includes(ci);
-                    const cx = MX + labelColW + ci * colW + colW / 2;
-                    return (
-                      <g key={`ch-${ci}`}>
-                        <rect x={MX + labelColW + ci * colW + 4} y={MY}
-                          width={colW - 8} height={32} rx={6}
-                          fill={isChanged ? BLUE_MID : GRAY_LIGHT}
-                          stroke={isChanged ? BLUE : GRAY_MID} strokeWidth={1} />
-                        <text x={cx} y={MY + 14} textAnchor="middle"
-                          fontSize={12} fontFamily="IBM Plex Mono" fontWeight="700"
-                          fill={isChanged ? BLUE : GRAY}>
-                          {f}
-                        </text>
-                        <text x={cx} y={MY + 27} textAnchor="middle"
-                          fontSize={8} fontFamily="IBM Plex Mono" fontWeight="400"
-                          fill={isChanged ? BLUE : GRAY}>
-                          {FUNC_NAMES[ci].replace("()", "")}
-                        </text>
-                        {isChanged && (
-                          <text x={cx} y={MY - 6} textAnchor="middle"
-                            fontSize={8} fontFamily="IBM Plex Sans" fontWeight="600" fill={ORANGE}>
-                            Δ
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
+                <g key={`ch-${ci}`}>
+                  <rect x={hx} y={M_TOP} width={hw} height={46} rx={8}
+                    fill={isChg ? BLUE_MID : GRAY_LIGHT} stroke={isChg ? BLUE : GRAY_MID} strokeWidth={isChg ? 1.5 : 1} />
+                  <text x={hx + hw / 2} y={M_TOP + 22} textAnchor="middle"
+                    fontSize={20} fontFamily="IBM Plex Mono" fontWeight="700"
+                    fill={isChg ? BLUE : GRAY}>{f}</text>
+                  {isChg && (
+                    <text x={hx + hw / 2} y={M_TOP + 38} textAnchor="middle"
+                      fontSize={9} fontFamily="IBM Plex Sans" fontWeight="600" fill={ORANGE}>Δ изменена</text>
+                  )}
+                </g>
+              );
+            })}
 
-                  {/* Rows */}
-                  {matrix.map((row, ri) => {
-                    const isSelected = TESTS[ri].covers.some(fi => CHANGED_FUNCS.includes(fi));
-                    const ry = MY + 40 + ri * rowH;
-                    return (
-                      <g key={`row-${ri}`}>
-                        {/* Row label */}
-                        <rect x={MX} y={ry + 4} width={labelColW - 6} height={rowH - 10} rx={6}
-                          fill={isSelected ? GREEN_PALE : GRAY_LIGHT}
-                          stroke={isSelected ? GREEN : GRAY_MID} strokeWidth={1} />
-                        <text x={MX + (labelColW - 6) / 2} y={ry + 28} textAnchor="middle"
-                          fontSize={13} fontFamily="IBM Plex Mono" fontWeight="700"
-                          fill={isSelected ? GREEN : GRAY}>
-                          {TESTS[ri].id}
-                        </text>
-                        {isSelected && (
-                          <text x={MX + (labelColW - 6) / 2} y={ry + 50} textAnchor="middle"
-                            fontSize={8} fontFamily="IBM Plex Sans" fontWeight="600" fill={GREEN}>
-                            ✓ отобран
-                          </text>
-                        )}
+            {/* Matrix rows */}
+            {MATRIX.map((row, ri) => {
+              const sel = isSel(ri);
+              const ry = M_TOP + 54 + ri * ROW_H;
+              const lw = LABEL_W - 6;
+              return (
+                <g key={`row-${ri}`}>
+                  <rect x={M_LEFT} y={ry + 4} width={lw} height={ROW_H - 10} rx={8}
+                    fill={sel ? GREEN_PALE : GRAY_LIGHT} stroke={sel ? GREEN : GRAY_MID} strokeWidth={sel ? 1.5 : 1} />
+                  <text x={M_LEFT + lw / 2} y={ry + ROW_H / 2 + 8} textAnchor="middle"
+                    fontSize={18} fontFamily="IBM Plex Mono" fontWeight="700"
+                    fill={sel ? GREEN : GRAY}>{TESTS[ri].id}</text>
 
-                        {/* Cells */}
-                        {row.map((val, ci) => {
-                          const isOne = val === 1;
-                          const isChangedCol = CHANGED_FUNCS.includes(ci);
-                          const isHit = isOne && isChangedCol; // тест покрывает изменённую функцию
-                          const cellX = MX + labelColW + ci * colW + 4;
-                          const cellY = ry + 4;
-                          const cw2 = colW - 8;
-                          const ch2 = rowH - 10;
-                          return (
-                            <g key={`cell-${ri}-${ci}`}>
-                              <rect x={cellX} y={cellY} width={cw2} height={ch2} rx={6}
-                                fill={isHit ? "#DCFCE7" : isOne ? BLUE_PALE : GRAY_LIGHT}
-                                stroke={isHit ? GREEN : isOne ? BLUE_LIGHT : GRAY_MID}
-                                strokeWidth={isHit || isOne ? 1.5 : 1} />
-                              <text x={cellX + cw2 / 2} y={cellY + ch2 / 2 + 7} textAnchor="middle"
-                                fontSize={20} fontFamily="IBM Plex Mono" fontWeight="700"
-                                fill={isHit ? GREEN : isOne ? BLUE : GRAY_MID}>
-                                {val}
-                              </text>
-                              {isHit && (
-                                <text x={cellX + cw2 / 2} y={cellY + ch2 - 8} textAnchor="middle"
-                                  fontSize={8} fontFamily="IBM Plex Sans" fill={GREEN} fontWeight="600">
-                                  ключ
-                                </text>
-                              )}
-                            </g>
-                          );
-                        })}
+                  {row.map((val, ci) => {
+                    const isChg = CHANGED.includes(ci);
+                    const isHit = val === 1 && isChg;
+                    const cx2 = M_LEFT + LABEL_W + ci * COL_W + 4;
+                    const cy2 = ry + 4;
+                    const cw = COL_W - 8;
+                    const ch = ROW_H - 10;
+                    return (
+                      <g key={`cell-${ri}-${ci}`}>
+                        <rect x={cx2} y={cy2} width={cw} height={ch} rx={8}
+                          fill={isHit ? "#DCFCE7" : val === 1 ? BLUE_PALE : GRAY_LIGHT}
+                          stroke={isHit ? GREEN : val === 1 ? BLUE_LIGHT : GRAY_MID}
+                          strokeWidth={isHit || val === 1 ? 1.5 : 1} />
+                        <text x={cx2 + cw / 2} y={cy2 + ch / 2 + 12} textAnchor="middle"
+                          fontSize={32} fontFamily="IBM Plex Mono" fontWeight="700"
+                          fill={isHit ? GREEN : val === 1 ? BLUE : GRAY_MID}>{val}</text>
                       </g>
                     );
                   })}
                 </g>
               );
-            })()}
+            })}
 
-            {/* ══════════ ARROWS ══════════ */}
-            {/* 1 → 2 */}
-            <line x1={B1X + B1W + 2} y1={ARROW_Y} x2={B2X - 4} y2={ARROW_Y}
-              stroke={BLUE_LIGHT} strokeWidth={2.5} markerEnd="url(#arr-blue)" />
+            {/* Matrix legend */}
+            {[
+              { fill: BLUE_PALE, stroke: BLUE_LIGHT, label: "1 — покрывает" },
+              { fill: GRAY_LIGHT, stroke: GRAY_MID, label: "0 — не покрывает" },
+              { fill: "#DCFCE7", stroke: GREEN, label: "1 — покрывает изменённую f" },
+            ].map(({ fill, stroke, label }, i) => (
+              <g key={label} transform={`translate(${M_LEFT + i * 184}, ${M_TOP + 58 + TESTS.length * ROW_H + 18})`}>
+                <rect width={20} height={20} rx={4} fill={fill} stroke={stroke} strokeWidth={1.5} />
+                <text x={28} y={15} fontSize={11} fontFamily="IBM Plex Sans" fill={GRAY}>{label}</text>
+              </g>
+            ))}
 
-            {/* 2 → 3 */}
-            <line x1={B2X + B2W + 2} y1={ARROW_Y} x2={B3X - 4} y2={ARROW_Y}
-              stroke={BLUE_LIGHT} strokeWidth={2.5} markerEnd="url(#arr-blue)" />
-
-            {/* 3 → 4 */}
-            <line x1={B3X + B3W + 2} y1={ARROW_Y} x2={B4X - 4} y2={ARROW_Y}
-              stroke={GREEN} strokeWidth={2.5} markerEnd="url(#arr-green)" />
-
-            {/* Legend */}
-            <g transform={`translate(${B4X}, ${TOP + BH + 16})`}>
-              {[
-                { color: BLUE, label: "изменённая функция" },
-                { color: GREEN, label: "отобранный тест" },
-                { color: "#86EFAC", label: "ключевое покрытие" },
-                { color: ORANGE, label: "Δ — изменение" },
-              ].map(({ color, label }, i) => (
-                <g key={label} transform={`translate(${i * 136}, 0)`}>
-                  <rect width={12} height={12} rx={3} fill={color} />
-                  <text x={18} y={11} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>{label}</text>
-                </g>
-              ))}
-            </g>
+            {/* ══ ARROWS ══ */}
+            <line x1={B1X + B1W + 4} y1={MID_Y} x2={B2X - 4} y2={MID_Y}
+              stroke={BLUE_LIGHT} strokeWidth={2.5} markerEnd="url(#a-bl)" />
+            <line x1={B2X + B2W + 4} y1={MID_Y} x2={B3X - 4} y2={MID_Y}
+              stroke={BLUE_LIGHT} strokeWidth={2.5} markerEnd="url(#a-bl)" />
+            <line x1={B3X + B3W + 4} y1={MID_Y} x2={B4X - 4} y2={MID_Y}
+              stroke={GREEN} strokeWidth={2.5} markerEnd="url(#a-gr)" />
           </svg>
         </div>
       </div>
