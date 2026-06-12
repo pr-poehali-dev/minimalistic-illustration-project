@@ -20,12 +20,14 @@ const H = 1080;
 const FUNCS = ["f₁", "f₂", "f₃", "f₄"];
 const CHANGED = [1, 3];
 
-// 4 теста: какие функции покрывают
+// 6 тестов: 4 покрывают изменённые функции, 2 — нет
 const TESTS = [
-  { id: "t₁", covers: [0, 1] },
-  { id: "t₂", covers: [1, 2] },
-  { id: "t₃", covers: [2, 3] },
-  { id: "t₄", covers: [0, 3] },
+  { id: "t₁", covers: [1] },       // только f₂ (изменена) → отобран
+  { id: "t₂", covers: [0, 1] },    // f₁, f₂ (f₂ изменена) → отобран
+  { id: "t₃", covers: [2, 3] },    // f₃, f₄ (f₄ изменена) → отобран
+  { id: "t₄", covers: [1, 2, 3] }, // f₂, f₃, f₄ → отобран
+  { id: "t₅", covers: [0, 2] },    // f₁, f₃ — не изменены → не отобран
+  { id: "t₆", covers: [0] },       // только f₁ — не изменена → не отобран
 ];
 
 const MATRIX = TESTS.map(t => FUNCS.map((_, fi) => t.covers.includes(fi) ? 1 : 0));
@@ -67,16 +69,17 @@ export default function Index() {
 
   const B1W = 250; const B1X = PAD;
   const B2W = 250; const B2X = B1X + B1W + GAP;
-  const B3W = 530; const B3X = B2X + B2W + GAP;
-  const B4W = 570; const B4X = B3X + B3W + GAP;
+  const B3W = 560; const B3X = B2X + B2W + GAP;
+  const B4W = 560; const B4X = B3X + B3W + GAP;
 
-  const T_ROW_H = (BH - 48) / TESTS.length;
+  // Block3: 6 тестов, фиксированная высота строки
+  const T_ROW_H = 124;
 
   const M_LEFT = B4X + 20;
   const M_TOP = TOP + 58;
-  const LABEL_W = 52;
+  const LABEL_W = 50;
   const COL_W = (B4W - LABEL_W - 36) / FUNCS.length;
-  const ROW_H = (BH - 80) / TESTS.length;
+  const ROW_H = (BH - 90) / TESTS.length; // 6 тестов
 
   return (
     <div style={{ fontFamily: "IBM Plex Sans, sans-serif", background: "#F8FAFC", minHeight: "100vh" }}>
@@ -241,62 +244,98 @@ export default function Index() {
             <text x={B3X + B3W / 2} y={TOP + 30} textAnchor="middle"
               fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>T — набор тестов</text>
 
+            {/* "Отобраны" section label */}
+            <text x={B3X + 16} y={TOP + 52} fontSize={10} fontFamily="IBM Plex Sans" fontWeight="600" fill={GREEN}>
+              отобраны (покрывают ΔF):
+            </text>
+
             {TESTS.map((test, ti) => {
               const sel = isSel(ti);
-              const ty = TOP + 46 + ti * T_ROW_H;
-              const tx = B3X + 12; const tw = B3W - 24; const th = T_ROW_H - 10;
-              const midY = ty + 4 + th / 2;
+              // selected tests: rows 0-3 in top section, rejected: rows 4-5 in bottom section
+              const selCount = TESTS.filter((_, i) => isSel(i)).length;
+              const selIdx = TESTS.slice(0, ti).filter((_, i) => isSel(i)).length;
+              const rejIdx = TESTS.slice(0, ti).filter((_, i) => !isSel(i)).length;
+
+              const SECTION_TOP_Y = TOP + 58;
+              const SEL_ROW_H = 116;
+              const REJ_ROW_H = 110;
+              const DIVIDER_Y = SECTION_TOP_Y + selCount * SEL_ROW_H + 14;
+
+              const ty = sel
+                ? SECTION_TOP_Y + selIdx * SEL_ROW_H
+                : DIVIDER_Y + 28 + rejIdx * REJ_ROW_H;
+
+              const tx = B3X + 12; const tw = B3W - 24;
+              const th = sel ? SEL_ROW_H - 8 : REJ_ROW_H - 8;
+              const midY = ty + th / 2;
+
+              // Sub-block width based on covers count (max 3 covers)
+              const subW = Math.min(140, (tw - 72) / Math.max(test.covers.length, 1) - 6);
+
               return (
                 <g key={test.id}>
-                  <rect x={tx} y={ty + 4} width={tw} height={th} rx={10}
-                    fill={sel ? GREEN_PALE : GRAY_LIGHT}
-                    stroke={sel ? GREEN : GRAY_MID} strokeWidth={sel ? 2 : 1} />
-                  {sel && <rect x={tx} y={ty + 4} width={4} height={th} rx={2} fill={GREEN} />}
-
-                  {/* Test circle label */}
-                  <circle cx={tx + 34} cy={midY} r={22} fill={sel ? GREEN : GRAY_MID} />
-                  <text x={tx + 34} y={midY + 7} textAnchor="middle"
-                    fontSize={16} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{test.id}</text>
-
-                  {/* Selected badge */}
-                  {sel && (
+                  {/* Divider before rejected section */}
+                  {!sel && rejIdx === 0 && (
                     <g>
-                      <rect x={tx + tw - 92} y={ty + 10} width={82} height={22} rx={11} fill={GREEN} />
-                      <text x={tx + tw - 51} y={ty + 25} textAnchor="middle"
-                        fontSize={10} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>✓ отобран</text>
+                      <line x1={B3X + 16} y1={DIVIDER_Y + 2} x2={B3X + B3W - 16} y2={DIVIDER_Y + 2}
+                        stroke={GRAY_MID} strokeWidth={1} strokeDasharray="4 4" />
+                      <text x={B3X + 16} y={DIVIDER_Y + 18} fontSize={10}
+                        fontFamily="IBM Plex Sans" fontWeight="600" fill={GRAY}>
+                        не отобраны (не покрывают ΔF):
+                      </text>
                     </g>
                   )}
 
-                  {/* "covers:" label */}
-                  <text x={tx + 66} y={midY - 24} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>покрывает:</text>
+                  <rect x={tx} y={ty} width={tw} height={th} rx={10}
+                    fill={sel ? GREEN_PALE : GRAY_LIGHT}
+                    stroke={sel ? GREEN : GRAY_MID} strokeWidth={sel ? 2 : 1} />
+                  {sel && <rect x={tx} y={ty} width={4} height={th} rx={2} fill={GREEN} />}
 
-                  {/* Sub-blocks per covered function */}
+                  {/* Test label circle */}
+                  <circle cx={tx + 30} cy={midY} r={20} fill={sel ? GREEN : GRAY_MID} />
+                  <text x={tx + 30} y={midY + 6} textAnchor="middle"
+                    fontSize={14} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{test.id}</text>
+
+                  {/* Badge */}
+                  {sel
+                    ? (
+                      <g>
+                        <rect x={tx + tw - 88} y={ty + 8} width={78} height={20} rx={10} fill={GREEN} />
+                        <text x={tx + tw - 49} y={ty + 22} textAnchor="middle"
+                          fontSize={9} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>✓ отобран</text>
+                      </g>
+                    ) : (
+                      <g>
+                        <rect x={tx + tw - 88} y={ty + 8} width={78} height={20} rx={10} fill={GRAY_MID} />
+                        <text x={tx + tw - 49} y={ty + 22} textAnchor="middle"
+                          fontSize={9} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>✗ пропущен</text>
+                      </g>
+                    )
+                  }
+
+                  {/* "covers:" */}
+                  <text x={tx + 58} y={midY - 20} fontSize={9} fontFamily="IBM Plex Sans" fill={GRAY}>покрывает:</text>
+
+                  {/* Sub-blocks */}
                   {test.covers.map((fi, ci) => {
                     const isChg = CHANGED.includes(fi);
-                    const bx = tx + 62 + ci * 222;
-                    const by = midY - 14;
-                    const bw = 210; const bh = 72;
+                    const bx = tx + 58 + ci * (subW + 6);
+                    const by = midY - 10;
+                    const bh = sel ? 56 : 52;
                     return (
                       <g key={fi}>
-                        <rect x={bx} y={by} width={bw} height={bh} rx={8}
+                        <rect x={bx} y={by} width={subW} height={bh} rx={7}
                           fill={isChg ? BLUE_PALE : WHITE}
                           stroke={isChg ? BLUE : GRAY_MID} strokeWidth={isChg ? 1.5 : 1} />
-                        {isChg && <rect x={bx} y={by} width={4} height={bh} rx={2} fill={BLUE} />}
-                        <circle cx={bx + 28} cy={by + 26} r={17} fill={isChg ? BLUE : GRAY_MID} />
-                        <text x={bx + 28} y={by + 32} textAnchor="middle"
-                          fontSize={14} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{FUNCS[fi]}</text>
-                        <text x={bx + 54} y={by + 22} fontSize={11} fontFamily="IBM Plex Sans"
-                          fontWeight={isChg ? "600" : "400"} fill={isChg ? DARK : GRAY}>
-                          {isChg ? "изменена" : "не изменена"}
+                        {isChg && <rect x={bx} y={by} width={3} height={bh} rx={1.5} fill={BLUE} />}
+                        <circle cx={bx + 18} cy={by + 18} r={12} fill={isChg ? BLUE : GRAY_MID} />
+                        <text x={bx + 18} y={by + 23} textAnchor="middle"
+                          fontSize={11} fontFamily="IBM Plex Mono" fontWeight="700" fill={WHITE}>{FUNCS[fi]}</text>
+                        <text x={bx + 36} y={by + 16} fontSize={9} fontFamily="IBM Plex Sans"
+                          fontWeight={isChg ? "600" : "400"} fill={isChg ? BLUE : GRAY}>
+                          {isChg ? "Δ изм." : "—"}
                         </text>
-                        {isChg && (
-                          <g>
-                            <circle cx={bx + bw - 18} cy={by + 16} r={10} fill={ORANGE} />
-                            <text x={bx + bw - 18} y={by + 20} textAnchor="middle"
-                              fontSize={9} fontFamily="IBM Plex Sans" fontWeight="700" fill={WHITE}>Δ</text>
-                          </g>
-                        )}
-                        <rect x={bx + 10} y={by + 48} width={bw - 20} height={8} rx={3}
+                        <rect x={bx + 8} y={by + 36} width={subW - 16} height={6} rx={2}
                           fill={isChg ? BLUE_MID : GRAY_LIGHT} />
                       </g>
                     );
@@ -334,14 +373,26 @@ export default function Index() {
             {/* Matrix rows */}
             {MATRIX.map((row, ri) => {
               const sel = isSel(ri);
+              const selCount = TESTS.filter((_, i) => isSel(i)).length;
               const ry = M_TOP + 54 + ri * ROW_H;
               const lw = LABEL_W - 6;
+              const cw = COL_W - 8;
+              const ch = ROW_H - 10;
               return (
                 <g key={`row-${ri}`}>
-                  <rect x={M_LEFT} y={ry + 4} width={lw} height={ROW_H - 10} rx={8}
+                  {/* Divider between selected / not selected in matrix */}
+                  {ri === selCount && (
+                    <g>
+                      <line x1={M_LEFT} y1={ry - 4} x2={M_LEFT + LABEL_W + FUNCS.length * COL_W} y2={ry - 4}
+                        stroke={GRAY_MID} strokeWidth={1} strokeDasharray="4 4" />
+                      <text x={M_LEFT} y={ry - 8} fontSize={8} fontFamily="IBM Plex Sans" fill={GRAY}>не отобраны</text>
+                    </g>
+                  )}
+
+                  <rect x={M_LEFT} y={ry + 4} width={lw} height={ch} rx={8}
                     fill={sel ? GREEN_PALE : GRAY_LIGHT} stroke={sel ? GREEN : GRAY_MID} strokeWidth={sel ? 1.5 : 1} />
-                  <text x={M_LEFT + lw / 2} y={ry + ROW_H / 2 + 8} textAnchor="middle"
-                    fontSize={18} fontFamily="IBM Plex Mono" fontWeight="700"
+                  <text x={M_LEFT + lw / 2} y={ry + ch / 2 + 8} textAnchor="middle"
+                    fontSize={16} fontFamily="IBM Plex Mono" fontWeight="700"
                     fill={sel ? GREEN : GRAY}>{TESTS[ri].id}</text>
 
                   {row.map((val, ci) => {
@@ -349,16 +400,14 @@ export default function Index() {
                     const isHit = val === 1 && isChg;
                     const cx2 = M_LEFT + LABEL_W + ci * COL_W + 4;
                     const cy2 = ry + 4;
-                    const cw = COL_W - 8;
-                    const ch = ROW_H - 10;
                     return (
                       <g key={`cell-${ri}-${ci}`}>
                         <rect x={cx2} y={cy2} width={cw} height={ch} rx={8}
                           fill={isHit ? "#DCFCE7" : val === 1 ? BLUE_PALE : GRAY_LIGHT}
                           stroke={isHit ? GREEN : val === 1 ? BLUE_LIGHT : GRAY_MID}
                           strokeWidth={isHit || val === 1 ? 1.5 : 1} />
-                        <text x={cx2 + cw / 2} y={cy2 + ch / 2 + 12} textAnchor="middle"
-                          fontSize={32} fontFamily="IBM Plex Mono" fontWeight="700"
+                        <text x={cx2 + cw / 2} y={cy2 + ch / 2 + 9} textAnchor="middle"
+                          fontSize={26} fontFamily="IBM Plex Mono" fontWeight="700"
                           fill={isHit ? GREEN : val === 1 ? BLUE : GRAY_MID}>{val}</text>
                       </g>
                     );
