@@ -121,10 +121,10 @@ export default function Index() {
 
             {/* Step labels */}
             {[
-              { cx: B1X + B1W / 2, t: "① Версии" },
-              { cx: B2X + B2W / 2, t: "② Изменения" },
-              { cx: B3X + B3W / 2, t: "③ Отбор тестов" },
-              { cx: B4X + B4W / 2, t: "④ Матрица покрытия" },
+              { cx: B1X + B1W / 2, t: "Версии" },
+              { cx: B2X + B2W / 2, t: "Изменения" },
+              { cx: B3X + B3W / 2, t: "Отбор тестов" },
+              { cx: B4X + B4W / 2, t: "Матрица покрытия" },
             ].map(({ cx, t }) => (
               <text key={t} x={cx} y={72} textAnchor="middle"
                 fontSize={13} fontFamily="IBM Plex Sans" fontWeight="500" fill={GRAY}>{t}</text>
@@ -134,7 +134,7 @@ export default function Index() {
             <rect x={B1X} y={TOP} width={B1W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B1X} y={TOP} width={B1W} height={4} rx={2} fill={BLUE} />
             <text x={B1X + B1W / 2} y={TOP + 30} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>P и P′</text>
+              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>Версии программы</text>
 
             {/* Version P */}
             {(() => {
@@ -246,7 +246,7 @@ export default function Index() {
 
             {/* "Отобраны" section label */}
             <text x={B3X + 16} y={TOP + 52} fontSize={10} fontFamily="IBM Plex Sans" fontWeight="600" fill={GREEN}>
-              отобраны (покрывают ΔF):
+              отобраны:
             </text>
 
             {TESTS.map((test, ti) => {
@@ -281,7 +281,7 @@ export default function Index() {
                         stroke={GRAY_MID} strokeWidth={1} strokeDasharray="4 4" />
                       <text x={B3X + 16} y={DIVIDER_Y + 18} fontSize={10}
                         fontFamily="IBM Plex Sans" fontWeight="600" fill={GRAY}>
-                        не отобраны (не покрывают ΔF):
+                        не отобраны:
                       </text>
                     </g>
                   )}
