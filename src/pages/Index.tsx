@@ -1,16 +1,16 @@
 import { useRef } from "react";
 
-const BLUE = "#1D4ED8";
-const BLUE_LIGHT = "#3B82F6";
-const BLUE_PALE = "#EFF6FF";
-const BLUE_MID = "#DBEAFE";
+const BLUE = "#1A1A1A";
+const BLUE_LIGHT = "#555555";
+const BLUE_PALE = "#F0F0F0";
+const BLUE_MID = "#DEDEDE";
 const GRAY = "#64748B";
 const GRAY_LIGHT = "#F1F5F9";
 const GRAY_MID = "#CBD5E1";
 const DARK = "#0F172A";
-const GREEN = "#059669";
-const GREEN_PALE = "#ECFDF5";
-const ORANGE = "#F59E0B";
+const GREEN = "#333333";
+const GREEN_PALE = "#ECECEC";
+const ORANGE = "#888888";
 const WHITE = "#FFFFFF";
 
 const W = 1920;
@@ -102,7 +102,7 @@ export default function Index() {
   const ROW_H = (BH - 70) / SEL_TESTS.length;
 
   return (
-    <div style={{ fontFamily: "IBM Plex Sans, sans-serif", background: "#F1F5F9", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "IBM Plex Sans, sans-serif", background: "#E8E8E8", minHeight: "100vh" }}>
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "12px 24px", background: WHITE, borderBottom: `1px solid ${GRAY_MID}`,
@@ -365,7 +365,7 @@ export default function Index() {
                     return (
                       <g key={`cell-${si}-${ci}`}>
                         <rect x={cx2} y={ry} width={cw} height={ch} rx={6}
-                          fill={isHit ? "#D1FAE5" : val === 1 ? BLUE_PALE : GRAY_LIGHT}
+                          fill={isHit ? "#D8D8D8" : val === 1 ? BLUE_PALE : GRAY_LIGHT}
                           stroke={isHit ? GREEN : val === 1 ? BLUE_LIGHT : GRAY_MID}
                           strokeWidth={isHit || val === 1 ? 1.5 : 1} />
                         <text x={cx2 + cw / 2} y={ry + ch / 2 + 11} textAnchor="middle"
