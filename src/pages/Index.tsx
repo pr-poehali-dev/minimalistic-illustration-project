@@ -133,8 +133,7 @@ export default function Index() {
             {/* ══ BLOCK 1: VERSIONS ══ */}
             <rect x={B1X} y={TOP} width={B1W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B1X} y={TOP} width={B1W} height={4} rx={2} fill={BLUE} />
-            <text x={B1X + B1W / 2} y={TOP + 30} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>Версии программы</text>
+
 
             {/* Version P */}
             {(() => {
@@ -142,8 +141,7 @@ export default function Index() {
               return (
                 <g>
                   <rect x={vx} y={vy} width={vw} height={vh} rx={8} fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1} />
-                  <text x={vx + vw / 2} y={vy + 22} textAnchor="middle"
-                    fontSize={11} fontFamily="IBM Plex Sans" fontWeight="600" fill={GRAY}>Базовая версия P</text>
+
                   {FUNCS.map((f, i) => (
                     <g key={i}>
                       <rect x={vx + 10} y={vy + 34 + i * 76} width={vw - 20} height={62} rx={6}
@@ -169,8 +167,7 @@ export default function Index() {
               return (
                 <g>
                   <rect x={vx} y={vy} width={vw} height={vh} rx={8} fill={BLUE_PALE} stroke={BLUE_LIGHT} strokeWidth={1.5} />
-                  <text x={vx + vw / 2} y={vy + 22} textAnchor="middle"
-                    fontSize={11} fontFamily="IBM Plex Sans" fontWeight="600" fill={BLUE}>Модифицированная P′</text>
+
                   {FUNCS.map((f, i) => {
                     const ch = CHANGED.includes(i);
                     return (
@@ -202,8 +199,7 @@ export default function Index() {
             {/* ══ BLOCK 2: ΔF ══ */}
             <rect x={B2X} y={TOP} width={B2W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B2X} y={TOP} width={B2W} height={4} rx={2} fill={ORANGE} />
-            <text x={B2X + B2W / 2} y={TOP + 30} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>ΔF</text>
+
 
             <text x={B2X + 18} y={TOP + 58} fontSize={10} fontFamily="IBM Plex Sans" fill={GRAY}>изменены:</text>
             {CHANGED.map((fi, i) => {
@@ -241,8 +237,7 @@ export default function Index() {
             {/* ══ BLOCK 3: TESTS ══ */}
             <rect x={B3X} y={TOP} width={B3W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B3X} y={TOP} width={B3W} height={4} rx={2} fill={GREEN} />
-            <text x={B3X + B3W / 2} y={TOP + 30} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>T — набор тестов</text>
+
 
             {/* "Отобраны" section label */}
             <text x={B3X + 16} y={TOP + 52} fontSize={10} fontFamily="IBM Plex Sans" fontWeight="600" fill={GREEN}>
@@ -347,8 +342,7 @@ export default function Index() {
             {/* ══ BLOCK 4: MATRIX ══ */}
             <rect x={B4X} y={TOP} width={B4W} height={BH} rx={12} fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             <rect x={B4X} y={TOP} width={B4W} height={4} rx={2} fill={BLUE} />
-            <text x={B4X + B4W / 2} y={TOP + 30} textAnchor="middle"
-              fontSize={13} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>I — матрица покрытия</text>
+
 
             {/* Col headers */}
             {FUNCS.map((f, ci) => {
