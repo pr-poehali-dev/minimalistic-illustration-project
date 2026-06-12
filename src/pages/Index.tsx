@@ -73,17 +73,19 @@ export default function Index() {
 
   const MID_Y = TOP + BH / 2;
 
-  // Block 1 inner
+  // Block 1 inner — строго внутри TOP..TOP+BH
   const VX = B1X + 10; const VW = B1W - 20;
-  const V1Y = TOP + 14; const V1H = (BH - 38) / 2 - 24;
-  const V2Y = V1Y + V1H + 38; const V2H = BH - 14 - V2Y + TOP;
+  const V1H = Math.floor((BH - 36) / 2);
+  const V1Y = TOP + 10;
+  const V2Y = V1Y + V1H + 16;
+  const V2H = TOP + BH - 10 - V2Y;
 
   const FUNC_H = (V1H - 8) / FUNCS.length;
   const FUNC2_H = (V2H - 8) / FUNCS.length;
 
-  // Block 2 inner
-  const CHG_H = (BH - 28 - 20) / 2 - 8;
-  const UNCHG_H = (BH - 28 - 20) / 2 - 8;
+  // Block 2 inner — всё внутри контейнера TOP..TOP+BH
+  const CHG_H = Math.floor((BH - 20) * 0.35); // высота карточки изменённой функции
+  const UNCHG_H = Math.floor((BH - 20) * 0.12); // высота карточки не изменённой функции
 
   // Block 3 inner: 4 selected + 2 not
   const SEL_COUNT = TESTS.filter((_, i) => isSel(i)).length;
@@ -151,6 +153,8 @@ export default function Index() {
             ))}
 
             {/* ══ BLOCK 1: VERSIONS ══ */}
+            <rect x={B1X} y={TOP} width={B1W} height={BH} rx={10}
+              fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             {/* Version P — grey card */}
             <rect x={B1X} y={V1Y} width={B1W} height={V1H} rx={10}
               fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1.5} />
@@ -200,32 +204,37 @@ export default function Index() {
             })}
 
             {/* ══ BLOCK 2: CHANGED FUNCS ══ */}
+            <rect x={B2X} y={TOP} width={B2W} height={BH} rx={10}
+              fill={WHITE} stroke={GRAY_MID} strokeWidth={1.5} />
             {/* Changed */}
             {CHANGED.map((fi, i) => {
-              const cy = TOP + 14 + i * (CHG_H + 12);
+              const cy = TOP + 10 + i * (CHG_H + 10);
               return (
                 <g key={`chg-${fi}`}>
-                  <rect x={B2X} y={cy} width={B2W} height={CHG_H} rx={10}
+                  <rect x={B2X + 8} y={cy} width={B2W - 16} height={CHG_H} rx={10}
                     fill={BLUE_PALE} stroke={BLUE} strokeWidth={2} />
-                  <rect x={B2X} y={cy} width={5} height={CHG_H} rx={2} fill={BLUE} />
-                  <circle cx={B2X + 40} cy={cy + CHG_H / 2} r={26} fill={BLUE} />
-                  <text x={B2X + 40} y={cy + CHG_H / 2 + 8} textAnchor="middle"
+                  <rect x={B2X + 8} y={cy} width={5} height={CHG_H} rx={2} fill={BLUE} />
+                  <circle cx={B2X + 48} cy={cy + CHG_H / 2} r={26} fill={BLUE} />
+                  <text x={B2X + 48} y={cy + CHG_H / 2 + 8} textAnchor="middle"
                     fontSize={22} fontFamily="IBM Plex Mono" fontWeight="800" fill={WHITE}>{FUNCS[fi]}</text>
-                  <text x={B2X + 76} y={cy + CHG_H / 2 - 8}
+                  <text x={B2X + 84} y={cy + CHG_H / 2 - 8}
                     fontSize={18} fontFamily="IBM Plex Sans" fontWeight="700" fill={DARK}>изменена</text>
-
                 </g>
               );
             })}
 
             {/* Not changed */}
             {FUNCS.filter((_, i) => !CHANGED.includes(i)).map((f, i) => {
-              const cy = TOP + 14 + 2 * (CHG_H + 12) + 12 + i * (UNCHG_H / 2 + 8);
+              const usedH = CHANGED.length * (CHG_H + 10);
+              const remaining = BH - usedH - 10;
+              const notCount = FUNCS.filter((_, i) => !CHANGED.includes(i)).length;
+              const uh = Math.floor((remaining - (notCount - 1) * 8) / notCount);
+              const cy = TOP + 10 + usedH + i * (uh + 8);
               return (
                 <g key={`unchg-${f}`}>
-                  <rect x={B2X} y={cy} width={B2W} height={UNCHG_H / 2} rx={8}
+                  <rect x={B2X + 8} y={cy} width={B2W - 16} height={uh} rx={8}
                     fill={GRAY_LIGHT} stroke={GRAY_MID} strokeWidth={1} />
-                  <text x={B2X + B2W / 2} y={cy + UNCHG_H / 4 + 9} textAnchor="middle"
+                  <text x={B2X + B2W / 2} y={cy + uh / 2 + 9} textAnchor="middle"
                     fontSize={22} fontFamily="IBM Plex Mono" fontWeight="700" fill={GRAY_MID}>{f}</text>
                 </g>
               );
